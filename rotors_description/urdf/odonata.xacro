@@ -1,0 +1,188 @@
+<?xml version="1.0"?>
+
+<!--
+  Copyright 2015 Fadri Furrer, ASL, ETH Zurich, Switzerland
+  Copyright 2015 Michael Burri, ASL, ETH Zurich, Switzerland
+  Copyright 2015 Mina Kamel, ASL, ETH Zurich, Switzerland
+  Copyright 2015 Janosch Nikolic, ASL, ETH Zurich, Switzerland
+  Copyright 2015 Markus Achtelik, ASL, ETH Zurich, Switzerland
+
+  2017 modified by Timo Muller, ASL, ETH Zurich, Switzerland
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<robot name="odonata" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Properties -->
+  <xacro:property name="namespace" value="$(arg namespace)" />
+  <xacro:property name="rotor_velocity_slowdown_sim" value="10" />
+  <xacro:property name="mass_main" value="2" /> <!-- [kg] -->
+  <xacro:property name="y_offset" value="0.32" /> <!-- [m] -->
+  <xacro:property name="body_height" value="0.16" /> <!-- [m] -->
+  <xacro:property name="mass_rotor" value="0.005" /> <!-- [kg] -->
+  <xacro:property name="arm_length" value="0.215" /> <!-- [m] -->
+  <xacro:property name="rotor_offset_top" value="0.037" /> <!-- [m] -->
+  <xacro:property name="radius_rotor" value="0.1" /> <!-- [m] -->
+  <xacro:property name="motor_constant" value="8.54858e-06" /> <!-- [kg m/s^2] -->
+  <xacro:property name="moment_constant" value="0.016" /> <!-- [m] -->
+  <xacro:property name="time_constant_up" value="0.0125" /> <!-- [s] -->
+  <xacro:property name="time_constant_down" value="0.025" /> <!-- [s] -->
+  <xacro:property name="max_rot_velocity" value="838" /> <!-- [rad/s] -->
+  <xacro:property name="sin30" value="0.5" />
+  <xacro:property name="cos30" value="0.866025403784" />
+  <xacro:property name="rotor_drag_coefficient" value="8.06428e-05" />
+  <xacro:property name="rolling_moment_coefficient" value="0.000001" />
+
+	<!-- main fuselage -->
+	
+	<link name="base_link">
+		<inertial>
+	        <mass value="${mass_main}" />  <!-- [kg] -->
+	        <origin xyz="0 0 0" />
+	        <inertia  ixx="1.0" ixy="0.0" ixz="0.0"
+        			  iyy="1.0" iyz="0.0"
+        			  izz="1.0"/> 	
+     	</inertial>
+
+	    <visual>
+	   	  <origin xyz="0 0 0" rpy="0 0 0" />	
+	      <geometry>
+	        <mesh filename="package://rotors_description/meshes/odonata/main.stl" scale="0.001 0.001 -0.001" />        
+	      </geometry>
+	    </visual>
+
+	    <!-- collision element comes here (optional)-->
+	</link>
+	<!-- **************************************************************************** -->
+
+	<!-- left arm -->
+	
+	<link name="left_arm">
+		<inertial>
+	        <mass value="0" />  <!-- [kg] -->
+	        <origin xyz="0 0 0" />
+	        <inertia  ixx="0.0" ixy="0.0" ixz="0.0"
+        			  iyy="0.0" iyz="0.0"
+        			  izz="0.0"/> 	
+     	</inertial>
+
+	    <visual>
+	   	  <origin xyz="0 0 0" rpy="0 0 0" />	
+	      <geometry>
+	        <mesh filename="package://rotors_description/meshes/odonata/left_arm.stl" scale="0.001 0.001 -0.001" />        
+	      </geometry>
+	    </visual>
+
+	    <!-- collision element comes here (optional)-->
+	</link>
+
+	<joint name="base_to_left_arm" type="revolute">
+		<axis xyz="0 1 0"/>
+		<limit effort="1000.0" lower="${-330/360*pi}" upper="${330/360*pi}" velocity="0.5"/>
+    	<parent link="base_link"/>
+    	<child link="left_arm"/>
+    	<origin xyz="0 0 0"/>
+    </joint>
+    <!-- **************************************************************************** -->
+
+	<!-- right arm -->
+	
+	<link name="right_arm">
+		<inertial>
+	        <mass value="0" />  <!-- [kg] -->
+	        <origin xyz="0 0 0" />
+	        <inertia  ixx="0.0" ixy="0.0" ixz="0.0"
+        			  iyy="0.0" iyz="0.0"
+        			  izz="0.0"/> 	
+     	</inertial>
+
+	    <visual>
+	   	  <origin xyz="0 0 0" rpy="0 0 0" />	
+	      <geometry>
+	        <mesh filename="package://rotors_description/meshes/odonata/right_arm.stl" scale="0.001 0.001 -0.001" />        
+	      </geometry>
+	    </visual>
+
+	    <!-- collision element comes here (optional)-->
+	</link>
+
+	<joint name="base_to_right_arm" type="revolute">
+		<axis xyz="0 1 0"/>
+		<limit effort="1000.0" lower="${-330/360*pi}" upper="${330/360*pi}" velocity="0.5"/>
+    	<parent link="base_link"/>
+    	<child link="right_arm"/>
+    	<origin xyz="0 0 0"/>
+    </joint>
+    <!-- **************************************************************************** -->
+
+	<!-- left motor -->
+	
+	<link name="left_motor">
+		<inertial>
+	        <mass value="0.5" />  <!-- [kg] -->
+	        <origin xyz="0 -${y_offset} 0" />
+	        <inertia  ixx="1.0" ixy="0.0" ixz="0.0"
+        			  iyy="1.0" iyz="0.0"
+        			  izz="1.0"/> 	
+     	</inertial>
+
+	    <visual>
+	   	  <origin xyz="0 -${y_offset} 0" rpy="0 0 0" />	
+	      <geometry>
+	        <mesh filename="package://rotors_description/meshes/odonata/left_motor.stl" scale="0.001 0.001 -0.001" />        
+	      </geometry>
+	    </visual>
+
+	    <!-- collision element comes here (optional)-->
+	</link>
+
+	<joint name="left_arm_to_motor" type="revolute">
+		<axis xyz="1 0 0"/>
+		<limit effort="1000.0" lower="${-10/180*pi}" upper="${10/180*pi}" velocity="0.5"/>
+    	<parent link="left_arm"/>
+    	<child link="left_motor"/>
+    	<origin xyz="0 ${y_offset} 0"/>
+    </joint>
+    <!-- **************************************************************************** -->
+
+	<!-- right motor -->
+	
+	<link name="right_motor">
+		<inertial>
+	        <mass value="0.5" />  <!-- [kg] -->
+	        <origin xyz="0 ${y_offset} 0" />
+	        <inertia  ixx="1.0" ixy="0.0" ixz="0.0"
+        			  iyy="1.0" iyz="0.0"
+        			  izz="1.0"/> 	
+     	</inertial>
+
+	    <visual>
+	   	  <origin xyz="0 ${y_offset} 0" rpy="0 0 0" />	
+	      <geometry>
+	        <mesh filename="package://rotors_description/meshes/odonata/right_motor.stl" scale="0.001 0.001 -0.001" />        
+	      </geometry>
+	    </visual>
+
+	    <!-- collision element comes here (optional)-->
+	</link>
+
+	<joint name="right_arm_to_motor" type="revolute">
+		<axis xyz="1 0 0"/>
+		<limit effort="1000.0" lower="${-10/180*pi}" upper="${10/180*pi}" velocity="0.5"/>
+    	<parent link="right_arm"/>
+    	<child link="right_motor"/>
+    	<origin xyz="0 -${y_offset} 0"/>
+    </joint>
+
+</robot>
